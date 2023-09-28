@@ -160,7 +160,7 @@ function get_messages(channel_name) {
                                         </div>
                                         <div style="margin-right: 10px;">
                                             <div style="display: flex; align-items: center;">
-                                                <button id="${element.message_id}" class="btnEditMessage">
+                                                <button id="${element.message_id}" class="abrirModal">
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16">
                                                     <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
                                                     </svg>
@@ -176,28 +176,39 @@ function get_messages(channel_name) {
                     messages_container.appendChild(div);
                     // Desplazar automáticamente el contenedor hacia abajo para mostrar el mensaje más reciente
                     messages_container.scrollTop = messages_container.scrollHeight;
-
-                    // Asignale un evento a todos los botones con la clase: btnDeleteMessage
-                    var btnsDelete = document.querySelectorAll(".btnDeleteMessage");
-                    btnsDelete.forEach(function(boton) {
-                        boton.addEventListener("click", function () {
-                            let message_id = boton.id // Tomamos el Id de la clase de cada boton.
-                            sessionStorage.setItem('message_id', message_id) // Guardamos el id del mensaje en sessionStorage
-                            deleteMessage()
-                        })
-                    });
-
-                    // Asignale un evento a todos los botones con la clase: btnEditMessage
-                    var btnsEdit = document.querySelectorAll(".btnEditMessage");
-                    var ejecutado = false;
-                    btnsEdit.forEach(function(boton) {
-                        boton.addEventListener("click", function () {
-                            message_id = boton.id // Tomamos el Id de la clase de cada boton.
-                            sessionStorage.setItem('message_id_edit', message_id) // Guardamos el id del mensaje en sessionStorage
-                            editMessage()
-                        })
-                    });
                 });
+
+                // BOTONES DEL MENSAJE -> ELIMINAR
+                // Asignale un evento a todos los botones con la clase: btnDeleteMessage
+                var btnsDelete = document.querySelectorAll(".btnDeleteMessage");
+
+                function manejarClickDelete(event) {
+                    let message_id_delete = event.currentTarget.id; // Tomamos el Id del botón actual
+                    sessionStorage.setItem('message_id', message_id_delete); // Guardamos el id del mensaje en sessionStorage
+                    deleteMessage();
+                    // Eliminamos el manejador de eventos después de ejecutarlo una vez
+                    event.currentTarget.removeEventListener("click", manejarClickDelete);
+                }
+                btnsDelete.forEach(function(boton) {
+                    boton.addEventListener("click", manejarClickDelete);
+                });
+
+                // BOTONES DEL MENSAJE -> EDITAR
+                // Asignale un evento a todos los botones con la clase: btnEditMessage
+                var abrirModal = document.querySelectorAll(".abrirModal");
+
+                function handleClick(event) {
+                    let message_id_editar = event.currentTarget.id; // Tomamos el Id del botón actual
+                    sessionStorage.setItem('message_id_edit', message_id_editar); // Guardamos el id del mensaje en sessionStorage
+                    // Abrir el modal al hacer clic en el botón
+                    miModal.style.display = "block";
+                    // Eliminamos el manejador de eventos después de ejecutarlo una vez
+                    event.currentTarget.removeEventListener("click", handleClick);
+                }
+                abrirModal.forEach(function(boton) {
+                    boton.addEventListener("click", handleClick);
+                });
+
             });
         } else {
             return response.json().then(data => {
@@ -258,7 +269,10 @@ function sendMessage() {
                     // console.log(data)
                     Toastify({
                         text: "Mensaje Enviado!",
-                        duration: 3000
+                        duration: 3000,
+                        style: {
+                            background: "linear-gradient(to right, #009942, #00b14d)",
+                          },
                         }).showToast();
                     // window.location.href = "homeDiscord.html";
                 });
@@ -288,7 +302,7 @@ function deleteMessage() {
         message_id: sessionStorage.getItem('message_id'),
         user_id: sessionStorage.getItem('user_id')
     };
-    // console.log(data)
+    console.log(data)
 
     const swalWithBootstrapButtons = Swal.mixin({
         customClass: {
@@ -314,35 +328,35 @@ function deleteMessage() {
             'success'
           )
 
-        fetch("http://127.0.0.1:5000/message/delete", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-            credentials: 'include'
-        })
-        .then(response => {
-            if (response.status === 200) {
-                // Redirect to profile page if login is successful
-                return response.json().then(data => {
-                    console.log(data.message)
-                    window.location.href = "homeDiscord.html";
-                });
-            } else {
-                return response.json().then(data => {
-                    Swal.fire({
-                        title: 'Error!',
-                        text: `${data.message}`,
-                        icon: 'error',
-                        confirmButtonText: 'close'
-                      })
-                });
-            }
-        })
-        .catch(error => {
-            document.getElementById("message").innerHTML = "An error occurred.";
-        });
+            fetch("http://127.0.0.1:5000/message/delete", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+                credentials: 'include'
+            })
+            .then(response => {
+                if (response.status === 200) {
+                    // Redirect to profile page if login is successful
+                    return response.json().then(data => {
+                        console.log(data.message)
+                        window.location.href = "homeDiscord.html";
+                    });
+                } else {
+                    return response.json().then(data => {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: `${data.message}`,
+                            icon: 'error',
+                            confirmButtonText: 'close'
+                        })
+                    });
+                }
+            })
+            .catch(error => {
+                document.getElementById("message").innerHTML = "An error occurred.";
+            });
         } else if (
           /* Read more about handling dismissals below */
           result.dismiss === Swal.DismissReason.cancel
@@ -358,20 +372,70 @@ function deleteMessage() {
 
 }
 
-function editMessage() {
+
+var miModal = document.getElementById("miModal");
+var cerrarModal = document.getElementById("cerrarModal");
+var obtenerValor = document.getElementById("obtenerValor");
+var campoDeEntradaModal = document.getElementById("campoDeEntradaModal");
+
+obtenerValor.addEventListener("click", function () {
+    var content = campoDeEntradaModal.value;
+
     const data = {
         message_id: sessionStorage.getItem('message_id_edit'),
-        user_id: sessionStorage.getItem('user_id')
+        user_id: sessionStorage.getItem('user_id'),
+        content: content
     };
     console.log(data)
 
-    // Notification
-    Toastify({
-        text: "Mensaje editado!",
-        duration: 3000
-        }).showToast();
-}
+    fetch("http://127.0.0.1:5000/message/edit", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+        credentials: 'include'
+    })
+    .then(response => {
+        if (response.status === 200) {
+            return response.json().then(data => {
+                Toastify({
+                    text: `${data.message}`,
+                    duration: 3000,
+                    style: {
+                        background: "linear-gradient(to right, #009942, #00b14d)",
+                      },
+                    }).showToast();
+                // window.location.href = "homeDiscord.html";
+            });
+        } else {
+            return response.json().then(data => {
+                // Alert
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: `${data.message}`
+                  })
+            });
+        }
+    })
+    .catch(error => {
+        document.getElementById("message").innerHTML = "An error occurred.";
+    });
+  });
 
+
+// Cerrar el modal al hacer clic en la 'x'
+cerrarModal.addEventListener("click", function () {
+    miModal.style.display = "none";
+});
+
+// Cerrar el modal al hacer clic fuera de él
+window.addEventListener("click", function (event) {
+    if (event.target == miModal) {
+      miModal.style.display = "none";
+    }
+});
 
 
 const btnExitServer = document.getElementById('btn-Exit-Server');
