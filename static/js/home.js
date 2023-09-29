@@ -2,8 +2,6 @@ window.addEventListener('DOMContentLoaded', function () {
     getServers();
 });
 
-
-// var server_name = sessionStorage.getItem('server_name')
 let idBotonGlobal = null // id del boton del servidor seleccionado -> Global
 
 

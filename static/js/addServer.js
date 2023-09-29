@@ -19,9 +19,9 @@ function addServer() {
     })
     .then(response => {
         if (response.status === 201) {
-            // Redirect to profile page if login is successful
             return response.json().then(data => {
-                window.location.href = "homeDiscord.html";
+              console.log(data)
+              window.location.href = "homeDiscord.html";
             });
         } else {
             return response.json().then(data => {
